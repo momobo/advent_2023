@@ -125,7 +125,7 @@ VALUES
 
 select * from AoC_Input ;
 
----------- PART 1 -----------------------------------------------------------------------------------------------------
+---------- PART 1&2 -----------------------------------------------------------------------------------------------------
 
 with DRAWS as (
 select 
@@ -178,9 +178,11 @@ select
 	end as calc1
 from colors
 ) 
---select * from calc_first 
---where calc1=0
-  select sum(calc1) from calc_first
+-- Calculate result
+  select 
+  sum(calc1)            as res_1
+  , sum(maxr*maxg*maxb) as res_2
+  from calc_first
 ;
 
 
