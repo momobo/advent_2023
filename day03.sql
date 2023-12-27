@@ -362,25 +362,125 @@ nums as(
 		, regexp_instr(day_input, '(\d+)', 1, nn::Int)  as num_pos
 	from numbers
 ), part1 as (
-select 
-	r.rown
-	, r.numint
-	, r.num_pos
-	, r.num_len
-	, rm1.rown as rm1_row
-	, rm1.sym_pos as rm1_sym_pos
-	, rp1.rown as rp1_row
-	, rp1.sym_pos as rp1_sym_pos
-	, rsr.sym_pos as rsr_sym_pos
-from num_all r
--- get the symbols in the right position in the row before
-  left join symb_all rm1 on nullif(rm1.rown, -1) +1 = r.rown and rm1.sym_pos between r.num_pos-1 and r.num_pos + r.num_len and rm1.rown is not null
--- get the symbols in the right position in the row after
-  left join symb_all rp1 on nullif(rp1.rown, -1) -1 = r.rown and rp1.sym_pos between r.num_pos-1 and r.num_pos + r.num_len and rp1.rown is not null 
--- get the symbols in the right position in the same row
-  left join symb_all rsr on rsr.rown = r.rown                and rsr.sym_pos between r.num_pos-1 and r.num_pos + r.num_len
-where 
-	rm1.rown is not null or rp1.rown is not null or rsr.rown is not null
+	select 
+		r.rown
+		, r.numint
+		, r.num_pos
+		, r.num_len
+		, rm1.rown as rm1_row
+		, rm1.sym_pos as rm1_sym_pos
+		, rp1.rown as rp1_row
+		, rp1.sym_pos as rp1_sym_pos
+		, rsr.sym_pos as rsr_sym_pos
+	from num_all r
+	-- get the symbols in the right position in the row before
+	  left join symb_all rm1 on nullif(rm1.rown, -1) +1 = r.rown and rm1.sym_pos between r.num_pos-1 and r.num_pos + r.num_len and rm1.rown is not null
+	-- get the symbols in the right position in the row after
+	  left join symb_all rp1 on nullif(rp1.rown, -1) -1 = r.rown and rp1.sym_pos between r.num_pos-1 and r.num_pos + r.num_len and rp1.rown is not null 
+	-- get the symbols in the right position in the same row
+	  left join symb_all rsr on rsr.rown = r.rown                and rsr.sym_pos between r.num_pos-1 and r.num_pos + r.num_len
+	where 
+		rm1.rown is not null or rp1.rown is not null or rsr.rown is not null
 ) 
 select 	sum(part1.numint)  from part1
 ;
+
+--------------------------------------------------------------------------
+------------------------------ part 2 ------------------------------------
+--------------------------------------------------------------------------
+-- warning: this solution will not perfectly work if you have two equal number in the same gear. You could easily check visually if this is the case
+with inp as (
+	select day_input, rown	
+	from aoc_input 
+	where daynum = 3 and input_type = 'P' 
+), getnums as (
+	select 
+		day_input
+		, rown
+		, array_remove(regexp_split_to_array(day_input, '[\.\$\*\/\@\%\+\=\&\-\#]+'), '') as list
+    from inp 
+ ), 
+nums as(
+	select
+		day_input
+		, rown 
+		, unnest(list)  as num	
+	from getnums
+), numbers as (   --- numbers contains all the info on numbers
+	select 
+	 day_input
+		, rown 
+		, row_number() over (partition by rown) as nn 
+		, num
+	from nums
+), getsyms as ( 
+       select 
+		day_input
+		, rown
+		, array_remove(regexp_split_to_array(day_input, '[\.\$\/\@\%\+\=\&\-\#\d]+'), '') as list
+   from inp
+ ), syms as (
+ 	select
+		day_input
+		, rown 
+		, unnest(list)  as sym
+	from getsyms
+ ), symbols as (   
+	select 
+	 day_input
+		, rown 
+		, row_number() over (partition by rown) as nn 
+		, sym
+	from syms
+), symb_all as(
+	select 
+		day_input
+		, rown
+		, sym
+		, regexp_instr(day_input, '([\*]+)', 1, nn::Int)  as sym_pos
+	from symbols
+), num_all as (
+	select 
+		day_input
+		, rown
+		, num::Int as numint 
+		, length(num) as num_len
+		, regexp_instr(day_input, '(\d+)', 1, nn::Int)  as num_pos
+	from numbers
+), part2 as (
+	select 
+		r.rown
+		, r.numint
+		, r.num_pos
+		, r.num_len
+		, rm1.rown as rm1_row
+		, rm1.sym_pos as rm1_sym_pos
+		, rp1.rown as rp1_row
+		, rp1.sym_pos as rp1_sym_pos
+		, rsr.sym_pos as rsr_sym_pos
+		, coalesce(rm1.rown, rp1.rown, r.rown) as coal_symrow
+		, coalesce(rp1.sym_pos, rm1.sym_pos, rsr.sym_pos) as coal_sympos
+	from num_all r
+	-- get the * in the right position in the row before
+	  left join symb_all rm1 on nullif(rm1.rown, -1) +1 = r.rown and rm1.sym_pos between r.num_pos-1 and r.num_pos + r.num_len and rm1.rown is not null
+	-- get the * in the right position in the row after
+	  left join symb_all rp1 on nullif(rp1.rown, -1) -1 = r.rown and rp1.sym_pos between r.num_pos-1 and r.num_pos + r.num_len and rp1.rown is not null 
+	-- get the * in the right position in the same row
+	  left join symb_all rsr on rsr.rown = r.rown                and rsr.sym_pos between r.num_pos-1 and r.num_pos + r.num_len
+	where 
+		rm1.rown is not null or rp1.rown is not null or rsr.rown is not null
+), sol2 as (
+-- join the numbers connected with the same gear, excluding the join of a number with himself (the edge case of two equal number excluded manually)
+	select 
+ 		p2a.numint * p2b.numint as gear_ratio
+ 		, p2a.numint
+ 		, p2b.numint
+ 		, p2a.coal_symrow
+ 		, p2a.coal_sympos
+	from part2 p2a 
+		join part2 p2b on p2a.coal_symrow = p2b.coal_symrow and p2a.coal_sympos = p2b.coal_sympos and p2a.numint <> p2b.numint
+)
+	select sum(gear_ratio) / 2  -- we get N1 * N2 and N2 * N1 hence every number is counted twice
+	from sol2
+;
+
