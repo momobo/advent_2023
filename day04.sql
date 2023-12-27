@@ -1,4 +1,4 @@
-select current_database();win
+select current_database();
 select current_schema();
 use database Advent2023;
 
@@ -314,61 +314,261 @@ from res
 
 
 
--------------------------------------------
-SELECT regexp_matches('Hello [World] How [Are] You','\[(.*?)\]','g');
-select regexp_count('ABCABCAXYaxy', 'A.')  ;
-----------------------------------------------------------
-----------------------------------------------------------
-, substring(day_input || ';' from ':(.*?);') as draw1
-	, substring(day_input || ';' from ';(.*?);') as draw2
-	, substring(day_input || ';' from ';.*?;(.*?);') as draw3
-	, substring(day_input || ';' from ';.*?;.*?;(.*?);') as draw4
-	, substring(day_input || ';' from ';.*?;.*?;.*?;(.*?);') as draw5
-	, substring(day_input || ';' from '.*;(.*?);') as draw6
-), colors as 
-(
+
+------------------------ PART 2 --------------------------------------------------------
+-- The solution is very slow, it just generate al the >5M rows and counts them
+-- not very elegant and (I should add) not mine. I found it somewhere on the internet
+with recursive preproc as (
+   select
+   	replace(day_input, '  ', ' _') as  day_input
+   	, rown
+   	from aoc_input
+	where daynum = 4 and input_type = 'P' order by ROWN
+), 
+ PARSE as (
 select 
-	case when game = 0 then 100 else game end as game
-	, rest
-	, substring(draw1 from '(\d+)\s*red'  )::NUMERIC as draw1r
-	, substring(draw1 from '(\d+)\s*green')::NUMERIC as draw1g
-	, substring(draw1 from '(\d+)\s*blue' )::NUMERIC as draw1b
-	, substring(draw2 from '(\d+)\s*red'  )::NUMERIC as draw2r
-	, substring(draw2 from '(\d+)\s*green')::NUMERIC as draw2g
-	, substring(draw2 from '(\d+)\s*blue' )::NUMERIC as draw2b
-	, substring(draw3 from '(\d+)\s*red'  )::NUMERIC as draw3r
-	, substring(draw3 from '(\d+)\s*green')::NUMERIC as draw3g
-	, substring(draw3 from '(\d+)\s*blue' )::NUMERIC as draw3b
-	, substring(draw4 from '(\d+)\s*red'  )::NUMERIC as draw4r
-	, substring(draw4 from '(\d+)\s*green')::NUMERIC as draw4g
-	, substring(draw4 from '(\d+)\s*blue' )::NUMERIC as draw4b
-	, substring(draw5 from '(\d+)\s*red'  )::NUMERIC as draw5r
-	, substring(draw5 from '(\d+)\s*green')::NUMERIC as draw5g
-	, substring(draw5 from '(\d+)\s*blue' )::NUMERIC as draw5b
-	, substring(draw6 from '(\d+)\s*red'  )::NUMERIC as draw6r
-	, substring(draw6 from '(\d+)\s*green')::NUMERIC as draw6g
-	, substring(draw6 from '(\d+)\s*blue' )::NUMERIC as draw6b
-from draws
-), calc_first as (
+	day_input
+	, rown
+	--
+	, substr(day_input, position('|' in day_input )+ 2, 2)  as Draw01
+	, substr(day_input, position('|' in day_input )+ 5, 2)  as Draw02
+	, substr(day_input, position('|' in day_input )+ 8, 2)  as Draw03
+	, substr(day_input, position('|' in day_input )+ 11, 2) as Draw04
+	, substr(day_input, position('|' in day_input )+ 14, 2) as Draw05
+	, substr(day_input, position('|' in day_input )+ 17, 2) as Draw06
+	, substr(day_input, position('|' in day_input )+ 20, 2) as Draw07
+	, substr(day_input, position('|' in day_input )+ 23, 2) as Draw08
+	, substr(day_input, position('|' in day_input )+ 26, 2) as Draw09
+	, substr(day_input, position('|' in day_input )+ 29, 2) as Draw10
+	, substr(day_input, position('|' in day_input )+ 32, 2) as Draw11
+	, substr(day_input, position('|' in day_input )+ 35, 2) as Draw12
+	, substr(day_input, position('|' in day_input )+ 38, 2) as Draw13
+	, substr(day_input, position('|' in day_input )+ 41, 2) as Draw14
+	, substr(day_input, position('|' in day_input )+ 44, 2) as Draw15
+	, substr(day_input, position('|' in day_input )+ 47, 2) as Draw16
+	, substr(day_input, position('|' in day_input )+ 50, 2) as Draw17
+	, substr(day_input, position('|' in day_input )+ 53, 2) as Draw18
+	, substr(day_input, position('|' in day_input )+ 56, 2) as Draw19
+	, substr(day_input, position('|' in day_input )+ 59, 2) as Draw20
+	, substr(day_input, position('|' in day_input )+ 62, 2) as Draw21
+	, substr(day_input, position('|' in day_input )+ 65, 2) as Draw22
+	, substr(day_input, position('|' in day_input )+ 68, 2) as Draw23
+	, substr(day_input, position('|' in day_input )+ 71, 2) as Draw24
+	, substr(day_input, position('|' in day_input )+ 74, 2) as Draw25
+	--
+	, substr(day_input, position(':' in day_input )+1, position('|' in day_input )- position(':' in day_input )-1) as totCart
+from preproc
+) ,
+CALC as (
 select 
-	game
-	, rest
-	, greatest(draw1r, draw2r, draw3r, draw4r, draw5r, draw6r) as maxr
-	, greatest(draw1g, draw2g, draw3g, draw4g, draw5g, draw6g) as maxg
-	, greatest(draw1b, draw2b, draw3b, draw4b, draw5b, draw6b) as maxb
-	, case 
-		when greatest(draw1r, draw2r, draw3r, draw4r, draw5r, draw6r) > 12 then 0
-		when greatest(draw1g, draw2g, draw3g, draw4g, draw5g, draw6g) > 13 then 0
-		when greatest(draw1b, draw2b, draw3b, draw4b, draw5b, draw6b) > 14 then 0
-		else game
-	end as calc1
-from colors
-) 
--- Calculate result
-  select 
-  sum(calc1)            as res_1
-  , sum(maxr*maxg*maxb) as res_2
-  from calc_first
+	day_input
+	, rown
+	, case when position(Draw01 in totCart)>0 then 1 else 0 end +
+	  case when position(Draw02 in totCart)>0 then 1 else 0 end +
+	  case when position(Draw03 in totCart)>0 then 1 else 0 end +
+	  case when position(Draw04 in totCart)>0 then 1 else 0 end +
+	  case when position(Draw05 in totCart)>0 then 1 else 0 end +
+	  case when position(Draw06 in totCart)>0 then 1 else 0 end +
+	  case when position(Draw07 in totCart)>0 then 1 else 0 end +
+	  case when position(Draw08 in totCart)>0 then 1 else 0 end +
+	  case when position(Draw09 in totCart)>0 then 1 else 0 end +
+	  case when position(Draw10 in totCart)>0 then 1 else 0 end +
+	  case when position(Draw11 in totCart)>0 then 1 else 0 end +
+	  case when position(Draw12 in totCart)>0 then 1 else 0 end +
+	  case when position(Draw13 in totCart)>0 then 1 else 0 end +
+	  case when position(Draw14 in totCart)>0 then 1 else 0 end +
+	  case when position(Draw15 in totCart)>0 then 1 else 0 end +
+	  case when position(Draw16 in totCart)>0 then 1 else 0 end +
+	  case when position(Draw17 in totCart)>0 then 1 else 0 end +
+	  case when position(Draw18 in totCart)>0 then 1 else 0 end +
+	  case when position(Draw19 in totCart)>0 then 1 else 0 end +
+	  case when position(Draw20 in totCart)>0 then 1 else 0 end +
+	  case when position(Draw21 in totCart)>0 then 1 else 0 end +
+	  case when position(Draw22 in totCart)>0 then 1 else 0 end +
+	  case when position(Draw23 in totCart)>0 then 1 else 0 end +
+	  case when position(Draw24 in totCart)>0 then 1 else 0 end +
+	  case when position(Draw25 in totCart)>0 then 1 else 0 end 
+	  as wins
+from PARSE
+),  cards_with_copies AS (
+    SELECT
+        rown 
+        , wins 
+    FROM calc
+    UNION ALL
+    SELECT
+        calc.rown 
+        , calc.wins 
+    FROM calc 
+    JOIN cards_with_copies ON calc.rown
+        BETWEEN
+            cards_with_copies.rown + 1
+        AND
+            cards_with_copies.rown + cards_with_copies.wins
+)
+SELECT
+    (SELECT COUNT(*) FROM cards_with_copies) as solution_part_2
 ;
+
+
+
+
+
+with recursive preproc as (
+   select
+   	replace(day_input, '  ', ' _') as  day_input
+   	, rown
+   	from aoc_input
+	where daynum = 4 and input_type = 'T' order by ROWN
+), 
+ PARSE as (
+select 
+	day_input
+	, rown
+	--
+	, substr(day_input, position('|' in day_input )+ 2, 2)  as Draw01
+	, substr(day_input, position('|' in day_input )+ 5, 2)  as Draw02
+	, substr(day_input, position('|' in day_input )+ 8, 2)  as Draw03
+	, substr(day_input, position('|' in day_input )+ 11, 2) as Draw04
+	, substr(day_input, position('|' in day_input )+ 14, 2) as Draw05
+	, substr(day_input, position('|' in day_input )+ 17, 2) as Draw06
+	, substr(day_input, position('|' in day_input )+ 20, 2) as Draw07
+	, substr(day_input, position('|' in day_input )+ 23, 2) as Draw08
+	, substr(day_input, position('|' in day_input )+ 26, 2) as Draw09
+	, substr(day_input, position('|' in day_input )+ 29, 2) as Draw10
+	, substr(day_input, position('|' in day_input )+ 32, 2) as Draw11
+	, substr(day_input, position('|' in day_input )+ 35, 2) as Draw12
+	, substr(day_input, position('|' in day_input )+ 38, 2) as Draw13
+	, substr(day_input, position('|' in day_input )+ 41, 2) as Draw14
+	, substr(day_input, position('|' in day_input )+ 44, 2) as Draw15
+	, substr(day_input, position('|' in day_input )+ 47, 2) as Draw16
+	, substr(day_input, position('|' in day_input )+ 50, 2) as Draw17
+	, substr(day_input, position('|' in day_input )+ 53, 2) as Draw18
+	, substr(day_input, position('|' in day_input )+ 56, 2) as Draw19
+	, substr(day_input, position('|' in day_input )+ 59, 2) as Draw20
+	, substr(day_input, position('|' in day_input )+ 62, 2) as Draw21
+	, substr(day_input, position('|' in day_input )+ 65, 2) as Draw22
+	, substr(day_input, position('|' in day_input )+ 68, 2) as Draw23
+	, substr(day_input, position('|' in day_input )+ 71, 2) as Draw24
+	, substr(day_input, position('|' in day_input )+ 74, 2) as Draw25
+	--
+	, substr(day_input, position(':' in day_input )+1, position('|' in day_input )- position(':' in day_input )-1) as totCart
+from preproc
+) ,
+CALC as (
+select 
+	day_input
+	, totCart
+	, rown
+	, case when Draw01 != '' AND position(Draw01 in totCart)>0 then 1 else 0 end +
+	  case when Draw02 != '' AND position(Draw02 in totCart)>0 then 1 else 0 end +
+	  case when Draw03 != '' AND position(Draw03 in totCart)>0 then 1 else 0 end +
+	  case when Draw04 != '' AND position(Draw04 in totCart)>0 then 1 else 0 end +
+	  case when Draw05 != '' AND position(Draw05 in totCart)>0 then 1 else 0 end +
+	  case when Draw06 != '' AND position(Draw06 in totCart)>0 then 1 else 0 end +
+	  case when Draw07 != '' AND position(Draw07 in totCart)>0 then 1 else 0 end +
+	  case when Draw08 != '' AND position(Draw08 in totCart)>0 then 1 else 0 end +
+	  case when Draw09 != '' AND position(Draw09 in totCart)>0 then 1 else 0 end +
+	  case when Draw10 != '' AND position(Draw10 in totCart)>0 then 1 else 0 end +
+	  case when Draw11 != '' AND position(Draw11 in totCart)>0 then 1 else 0 end +
+	  case when Draw12 != '' AND position(Draw12 in totCart)>0 then 1 else 0 end +
+	  case when Draw13 != '' AND position(Draw13 in totCart)>0 then 1 else 0 end +
+	  case when Draw14 != '' AND position(Draw14 in totCart)>0 then 1 else 0 end +
+	  case when Draw15 != '' AND position(Draw15 in totCart)>0 then 1 else 0 end +
+	  case when Draw16 != '' AND position(Draw16 in totCart)>0 then 1 else 0 end +
+	  case when Draw17 != '' AND position(Draw17 in totCart)>0 then 1 else 0 end +
+	  case when Draw18 != '' AND position(Draw18 in totCart)>0 then 1 else 0 end +
+	  case when Draw19 != '' AND position(Draw19 in totCart)>0 then 1 else 0 end +
+	  case when Draw20 != '' AND position(Draw20 in totCart)>0 then 1 else 0 end +
+	  case when Draw21 != '' AND position(Draw21 in totCart)>0 then 1 else 0 end +
+	  case when Draw22 != '' AND position(Draw22 in totCart)>0 then 1 else 0 end +
+	  case when Draw23 != '' AND position(Draw23 in totCart)>0 then 1 else 0 end +
+	  case when Draw24 != '' AND position(Draw24 in totCart)>0 then 1 else 0 end +
+	  case when Draw25 != '' AND position(Draw25 in totCart)>0 then 1 else 0 end 
+	  as wins
+from PARSE
+) ,  RES0 as
+(
+	select
+		  c1.rown
+		, coalesce(c1.wins, 0) as winc1
+		, coalesce(c2.wins, 0) as winc2
+		, coalesce(c3.wins, 0) as winc3
+		, coalesce(c4.wins, 0) as winc4
+		, coalesce(c5.wins, 0) as winc5
+		, coalesce(c6.wins, 0) as winc6
+	from calc c1 
+		left join calc c2 on c1.rown  = c2.rown	+1 
+		left join calc c3 on c1.rown  = c3.rown	+2 
+		left join calc c4 on c1.rown  = c4.rown	+3 
+		left join calc c5 on c1.rown  = c5.rown	+4 
+		left join calc c6 on c1.rown  = c6.rown	+5 
+), RES1 as (
+	select 
+ 		rown
+ 		--, 0::NUMERIC as rown_
+ 		, winc1 as wins
+ 		, 1 as Z
+ 	from res0 where rown = 1
+ 	union all
+	select 
+		res0.rown
+ 		--, res1.rown as rown_
+ 		, res1.wins
+ 		, res1.z + res0.winc2
+ 	from res1 join res0 on res0.rown = res1.rown +1
+)
+select * from res1
+;
+;
+
+-- i think it could be solved STILL NOT FINISHED
+-- I need to calculate the new day, based on the full previous days result 
+-- the problem is: each time the second half of the CTE runs, it sees only the results of the previous run.
+;
+case when coalesce(c10.wins, 0) >= 10 then c10.z
+	, CASE WHEN coalesce(LAG(wins, 1) OVER (  ORDER BY rown ), 0)>= 1 then 1 else 0 end 
+	+ CASE WHEN coalesce(LAG(wins, 2) OVER (  ORDER BY rown ), 0)>= 2 then 1 else 0 end 
+	+ CASE WHEN coalesce(LAG(wins, 3) OVER (  ORDER BY rown ), 0)>= 3 then 1 else 0 end 
+	+ CASE WHEN coalesce(LAG(wins, 4) OVER (  ORDER BY rown ), 0)>= 4 then 1 else 0 end 
+	+ CASE WHEN coalesce(LAG(wins, 5) OVER (  ORDER BY rown ), 0)>= 5 then 1 else 0 end 
+	+ CASE WHEN coalesce(LAG(wins, 6) OVER (  ORDER BY rown ), 0)>= 6 then 1 else 0 end 
+	+ CASE WHEN coalesce(LAG(wins, 7) OVER (  ORDER BY rown ), 0)>= 7 then 1 else 0 end 
+	+ CASE WHEN coalesce(LAG(wins, 8) OVER (  ORDER BY rown ), 0)>= 8 then 1 else 0 end 
+	+ CASE WHEN coalesce(LAG(wins, 9) OVER (  ORDER BY rown ), 0)>= 9 then 1 else 0 end 
+	+ CASE WHEN coalesce(LAG(wins,10) OVER (  ORDER BY rown ), 0)>=10 then 1 else 0 end as cumul
+;
+--- example of recursive query
+with recursive countup as (
+select 1 as N, 0 as Z
+union all 
+select N+1, z+N as Z
+from countup where N < 300
+)
+select * from countup;
+;
+
+---------
+WITH RECURSIVE cards_with_copies AS (
+    SELECT
+        card_id,
+        matches_count
+    FROM cards
+    UNION ALL
+    SELECT
+        cards.card_id,
+        cards.matches_count
+    FROM cards
+    JOIN cards_with_copies ON cards.card_id
+        BETWEEN
+            cards_with_copies.card_id + 1
+        AND
+            cards_with_copies.card_id + cards_with_copies.matches_count
+)
+SELECT
+    (SELECT SUM(2^(matches_count - 1)) FROM cards) as solution_part_1,
+    (SELECT COUNT(*) FROM cards_with_copies) as solution_part_2
+;
+
 
 
