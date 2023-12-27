@@ -177,9 +177,8 @@ VALUES
 
 select * from AoC_Input ;
 
----------- PART 1&2 -----------------------------------------------------------------------------------------------------
-\$\*/@%\+=&-#
-
+---------- PART 1 -----------------------------------------------------------------------------------------------------
+/*
 with inp as (
 	select day_input, rown	
 	from aoc_input 
@@ -300,8 +299,9 @@ from nums_pos_sym r
   left join nums_pos_sym rp1 on rp1.rown -1 = r.rown
 order by r.ROWN
 ;	
-
--- but maybe is better to unpivot everything
+*/
+--------------------------------------------------------------------------
+-- it is better to unpivot everything
 --------------------------------------------------------------------------
 with inp as (
 	select day_input, rown	
@@ -382,7 +382,5 @@ from num_all r
 where 
 	rm1.rown is not null or rp1.rown is not null or rsr.rown is not null
 ) 
-select 
-	sum(part1.numint) 
-from part1
+select 	sum(part1.numint)  from part1
 ;
